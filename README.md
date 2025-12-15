@@ -49,3 +49,13 @@ Proyecto desarrollado como parte de mi **portfolio personal**.
 ```bash
 git clone https://github.com/tu-usuario/acortador-de-urls.git
 cd acortador-de-urls
+
+## 🐳 Ejecutar con Docker
+
+Requisitos:
+- Docker
+- Docker Compose
+
+```bash
+docker compose up
+
