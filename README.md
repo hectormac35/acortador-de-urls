@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🔗 Acortador de URLs
 
-## Getting Started
+Aplicación web para acortar URLs, con autenticación de usuarios, panel de gestión y registro de clics.
+Cada usuario puede crear, activar/desactivar y borrar sus propios enlaces.
 
-First, run the development server:
+Proyecto desarrollado como parte de mi portfolio personal con enfoque en backend moderno y buenas prácticas.
 
-```bash
+🚀 Funcionalidades
+
+✅ Registro e inicio de sesión de usuarios
+
+🔗 Creación de URLs cortas (slug personalizado u automático)
+
+📊 Contador de clics por enlace
+
+🧑‍💻 Panel de control con:
+
+Copiar enlace
+
+Editar URL destino
+
+Activar / desactivar enlace
+
+Borrar enlace
+
+🔐 Protección por usuario (cada uno solo ve y gestiona sus URLs)
+
+⚡ Redirección rápida y segura
+
+🛠️ Tecnologías utilizadas
+
+Next.js 16 (App Router)
+
+TypeScript
+
+NextAuth.js (Credentials Provider)
+
+Prisma ORM
+
+PostgreSQL
+
+Tailwind CSS
+
+Zod (validaciones)
+
+bcrypt (hash de contraseñas)
+
+📦 Requisitos previos
+
+Node.js 18+
+
+PostgreSQL
+
+npm
+
+⚙️ Instalación y ejecución
+1️⃣ Clonar el repositorio
+git clone https://github.com/tu-usuario/acortador-de-urls.git
+cd acortador-de-urls
+
+2️⃣ Instalar dependencias
+npm install
+
+3️⃣ Variables de entorno
+
+Crea un archivo .env en la raíz del proyecto:
+
+DATABASE_URL="postgresql://USUARIO:CONTRASEÑA@localhost:5432/acortador?schema=public"
+NEXTAUTH_SECRET="una_clave_secreta_larga"
+NEXTAUTH_URL="http://localhost:3000"
+
+
+📌 Importante: no subas nunca este archivo a GitHub.
+
+4️⃣ Prisma (base de datos)
+npx prisma generate
+npx prisma migrate dev
+
+5️⃣ Arrancar el proyecto
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+👉 Abre en el navegador:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+http://localhost:3000
 
-## Learn More
+🧪 Flujo de uso
 
-To learn more about Next.js, take a look at the following resources:
+Registrarse en /register
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Iniciar sesión en /login
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Crear enlaces desde la página principal
 
-## Deploy on Vercel
+Gestionarlos desde /dashboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Acceder a un enlace corto:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+http://localhost:3000/{slug}
+
+🗂️ Estructura del proyecto (resumen)
+app/
+ ├─ api/
+ │   ├─ auth/            # NextAuth
+ │   ├─ register/        # Registro de usuarios
+ │   └─ urls/            # CRUD de URLs
+ ├─ dashboard/           # Panel del usuario
+ └─ page.tsx             # Home (crear enlace)
+lib/
+ ├─ prisma.ts            # Cliente Prisma
+ └─ auth.ts              # Configuración NextAuth
+prisma/
+ └─ schema.prisma        # Modelos BD
+
+🔐 Seguridad
+
+Contraseñas hasheadas con bcrypt
+
+Rutas protegidas por sesión
+
+Validación de datos con Zod
+
+Control de propiedad (un usuario no puede modificar URLs de otro)
