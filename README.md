@@ -59,3 +59,13 @@ Requisitos:
 ```bash
 docker compose up
 
+
+---
+
+# 5️⃣ Probarlo (muy importante)
+Desde la raíz del proyecto:
+
+```bash
+docker compose up --build
+
+
