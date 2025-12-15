@@ -140,35 +140,36 @@ export function UrlDashboard({ initialUrls }: Props) {
                     Inactivo
                   </span>
                 )}
-              </td>
-              <td className="p-2 text-right space-x-2">
-                <button
-                  onClick={() => copyUrl(u.slug)}
-                  className="text-xs px-2 py-1 border rounded-md"
-                >
-                  Copiar
-                </button>
-                <button
-                  onClick={() => editTarget(u.id, u.target)}
-                  disabled={loadingId === u.id}
-                  className="text-xs px-2 py-1 border rounded-md"
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => toggleActive(u.id, u.active)}
-                  disabled={loadingId === u.id}
-                  className="text-xs px-2 py-1 border rounded-md"
-                >
-                  {u.active ? 'Desactivar' : 'Activar'}
-                </button>
-                <button
-                  onClick={() => deleteUrl(u.id)}
-                  disabled={loadingId === u.id}
-                  className="text-xs px-2 py-1 border rounded-md text-red-600"
-                >
-                  Borrar
-                </button>
+              <td className="p-2"></td>
+                <div className="flex justify-end flex-wrap gap-2">
+                  <button
+                    onClick={() => copyUrl(u.slug)}
+                    className="text-xs px-2 py-1 border rounded-md"
+                  >
+                    Copiar
+                  </button>
+                  <button
+                    onClick={() => editTarget(u.id, u.target)}
+                    disabled={loadingId === u.id}
+                    className="text-xs px-2 py-1 border rounded-md"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => toggleActive(u.id, u.active)}
+                    disabled={loadingId === u.id}
+                    className="text-xs px-2 py-1 border rounded-md"
+                  >
+                    {u.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => deleteUrl(u.id)}
+                    disabled={loadingId === u.id}
+                    className="text-xs px-2 py-1 border rounded-md text-red-600"
+                  >
+                    Borrar
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

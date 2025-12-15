@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 
@@ -52,8 +52,11 @@ export default function Home() {
     }
   }
 
-  const origin =
-    typeof window !== 'undefined' ? window.location.origin : ''
+  const [origin, setOrigin] = useState('')
+
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
 
   return (
     <main className="min-h-screen bg-slate-100">

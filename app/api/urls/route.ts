@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
-// Esquema básico: URL obligatoria, slug opcional
+
 const CreateSchema = z.object({
   target: z.string().url(),
   slug: z.string().min(3).max(30).optional(),
@@ -11,9 +13,7 @@ const CreateSchema = z.object({
 function generateRandomSlug(length = 6) {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
-  for (let i = 0; i < length; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)]
-  }
+  for (let i = 0; i < length; i++) result += chars[Math.floor(Math.random() * chars.length)]
   return result
 }
 
@@ -26,6 +26,13 @@ async function generateUniqueSlug() {
 }
 
 export async function POST(req: Request) {
+  // ✅ 1) Exigir login
+  const session = await getServerSession(authOptions)
+  const userId = session?.user?.id
+  if (!userId) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  }
+
   const body = await req.json()
   const parsed = CreateSchema.safeParse(body)
 
@@ -35,13 +42,9 @@ export async function POST(req: Request) {
 
   const { target, slug: providedSlug } = parsed.data
 
-  // ✅ Validación extra del slug con regex "normal"
   if (providedSlug && !/^[a-z0-9-]+$/.test(providedSlug)) {
     return NextResponse.json(
-      {
-        error:
-          'El slug solo puede contener letras minúsculas, números y guiones',
-      },
+      { error: 'El slug solo puede contener letras minúsculas, números y guiones' },
       { status: 400 }
     )
   }
@@ -49,35 +52,35 @@ export async function POST(req: Request) {
   let slug = providedSlug ?? (await generateUniqueSlug())
 
   if (providedSlug) {
-    const existing = await prisma.url.findUnique({
-      where: { slug: providedSlug },
-    })
+    const existing = await prisma.url.findUnique({ where: { slug: providedSlug } })
     if (existing) {
-      return NextResponse.json(
-        { error: 'Ese slug ya está en uso' },
-        { status: 409 }
-      )
+      return NextResponse.json({ error: 'Ese slug ya está en uso' }, { status: 409 })
     }
   }
 
+  // ✅ 2) Guardar userId
   const url = await prisma.url.create({
-    data: {
-      target,
-      slug,
-    },
+    data: { target, slug, userId },
   })
 
   return NextResponse.json(url)
 }
 
 export async function GET() {
+  // ✅ 3) Exigir login + filtrar por usuario
+  
+  const session = await getServerSession(authOptions)
+  const userId = session?.user?.id
+  if (!userId) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  }
+
   const urls = await prisma.url.findMany({
+    where: { userId },
     orderBy: { createdAt: 'desc' },
     take: 50,
     include: {
-      _count: {
-        select: { clicks: true }, // 👈 nº de clics por URL
-      },
+      _count: { select: { clicks: true } },
     },
   })
 

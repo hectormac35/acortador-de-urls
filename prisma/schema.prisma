@@ -29,8 +29,9 @@ model Url {
   createdAt DateTime     @default(now())
   clicks    ClickEvent[]
 
-  userId String?
-  user   User?        @relation(fields: [userId], references: [id])
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
 }
 
 model ClickEvent {

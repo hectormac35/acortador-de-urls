@@ -40,24 +40,25 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  
   callbacks: {
-    // después de login / logout → vuelve a "/"
     async redirect({ baseUrl }) {
       return baseUrl
     },
     async jwt({ token, user }) {
       if (user) {
-        token.userId = (user as any).id
+        token.userId = user.id
       }
       return token
     },
     async session({ session, token }) {
-      if (token?.userId) {
-        ;(session.user as any).id = token.userId
+      if (session.user && token.userId) {
+        session.user.id = token.userId
       }
       return session
     },
   },
+
   pages: {
     signIn: '/login',
   },
