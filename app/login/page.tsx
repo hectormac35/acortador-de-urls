@@ -1,11 +1,14 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { Suspense, useState, type FormEvent } from 'react'
+import Link from 'next/link'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { AuthCard } from '../components/AuthCard'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const params = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -15,79 +18,47 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
-    const res = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    })
-
+    const res = await signIn('credentials', { redirect: false, email, password })
     setLoading(false)
-
     if (res?.error) {
-      setError('Credenciales incorrectas')
+      setError('Email o contraseña incorrectos')
       return
     }
-
-    router.push('/')
+    router.push('/dashboard')
+    router.refresh()
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-100">
-      <div className="bg-white shadow-md rounded-xl p-6 w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-4 text-center">
-          Iniciar sesión
-        </h1>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              className="w-full border rounded-md px-3 py-2 text-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              className="w-full border rounded-md px-3 py-2 text-sm"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white rounded-md py-2 text-sm font-medium disabled:opacity-60"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-
-        <p className="mt-4 text-sm text-center">
-          ¿No tienes cuenta?{' '}
-          <a href="/register" className="text-blue-600 underline">
-            Regístrate
-          </a>
-        </p>
-
-        {error && (
-          <p className="mt-4 text-sm text-red-600 text-center">
-            {error}
-          </p>
-        )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {params.get('registered') && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Cuenta creada. Ya puedes iniciar sesión.</p>
+      )}
+      <div>
+        <label htmlFor="email" className="label">Email</label>
+        <input id="email" type="email" autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
-    </main>
+      <div>
+        <label htmlFor="password" className="label">Contraseña</label>
+        <input id="password" type="password" autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      </div>
+      {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      <button type="submit" disabled={loading} className="btn-primary w-full py-3">
+        {loading ? 'Entrando…' : 'Iniciar sesión'}
+      </button>
+    </form>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <AuthCard
+      title="Iniciar sesión"
+      subtitle="Accede a tus enlaces y sus estadísticas."
+      footer={<>¿No tienes cuenta? <Link href="/register" className="font-semibold text-indigo-600 hover:underline">Regístrate</Link></>}
+    >
+      <Suspense>
+        <LoginForm />
+      </Suspense>
+    </AuthCard>
   )
 }

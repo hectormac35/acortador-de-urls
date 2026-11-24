@@ -1,34 +1,26 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import NextAuthSessionProvider from './SessionProvider'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+import { SiteHeader } from './components/SiteHeader'
+import { ToastProvider } from './components/Toast'
 
 export const metadata: Metadata = {
-  title: 'Acortador de URLs',
-  description: 'Acortador de URLs con estadísticas y autenticación',
+  title: { default: 'Acortador de URLs', template: '%s · Acortador de URLs' },
+  description: 'Acorta enlaces, compártelos con un código QR y mide sus clics.',
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
+      <body className={`${GeistSans.variable} ${GeistMono.variable}`}>
+        <NextAuthSessionProvider>
+          <ToastProvider>
+            <SiteHeader />
+            {children}
+          </ToastProvider>
+        </NextAuthSessionProvider>
       </body>
     </html>
   )

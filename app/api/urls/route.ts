@@ -1,76 +1,47 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { z } from 'zod'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-
-
-const CreateSchema = z.object({
-  target: z.string().url(),
-  slug: z.string().min(3).max(30).optional(),
-})
-
-function generateRandomSlug(length = 6) {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < length; i++) result += chars[Math.floor(Math.random() * chars.length)]
-  return result
-}
-
-async function generateUniqueSlug() {
-  while (true) {
-    const slug = generateRandomSlug()
-    const existing = await prisma.url.findUnique({ where: { slug } })
-    if (!existing) return slug
-  }
-}
+import { currentUserId } from '@/lib/session'
+import { createUrlSchema, firstIssue, generateSlug } from '@/lib/validation'
 
 export async function POST(req: Request) {
-  // ✅ 1) Exigir login
-  const session = await getServerSession(authOptions)
-  const userId = session?.user?.id
+  const userId = await currentUserId()
   if (!userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    return NextResponse.json({ error: 'Inicia sesión para crear enlaces' }, { status: 401 })
   }
 
-  const body = await req.json()
-  const parsed = CreateSchema.safeParse(body)
-
+  const body = await req.json().catch(() => null)
+  const parsed = createUrlSchema.safeParse(body ?? {})
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
+    return NextResponse.json({ error: firstIssue(parsed.error) }, { status: 400 })
   }
 
-  const { target, slug: providedSlug } = parsed.data
+  const { target, slug: customSlug } = parsed.data
 
-  if (providedSlug && !/^[a-z0-9-]+$/.test(providedSlug)) {
-    return NextResponse.json(
-      { error: 'El slug solo puede contener letras minúsculas, números y guiones' },
-      { status: 400 }
-    )
-  }
-
-  let slug = providedSlug ?? (await generateUniqueSlug())
-
-  if (providedSlug) {
-    const existing = await prisma.url.findUnique({ where: { slug: providedSlug } })
-    if (existing) {
-      return NextResponse.json({ error: 'Ese slug ya está en uso' }, { status: 409 })
+  // Insertamos directamente y dejamos que la restricción UNIQUE de la base de datos
+  // detecte los duplicados: así no hay carrera entre "comprobar" e "insertar".
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = customSlug ?? generateSlug()
+    try {
+      const url = await prisma.url.create({
+        data: { target, slug, userId },
+        include: { _count: { select: { clicks: true } } },
+      })
+      return NextResponse.json(url, { status: 201 })
+    } catch (e) {
+      const duplicated = e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002'
+      if (!duplicated) throw e
+      if (customSlug) {
+        return NextResponse.json({ error: 'Ese slug ya está en uso' }, { status: 409 })
+      }
+      // slug aleatorio repetido: probamos con otro
     }
   }
-
-  // ✅ 2) Guardar userId
-  const url = await prisma.url.create({
-    data: { target, slug, userId },
-  })
-
-  return NextResponse.json(url)
+  return NextResponse.json({ error: 'No se pudo generar un slug libre, inténtalo de nuevo' }, { status: 503 })
 }
 
 export async function GET() {
-  // ✅ 3) Exigir login + filtrar por usuario
-  
-  const session = await getServerSession(authOptions)
-  const userId = session?.user?.id
+  const userId = await currentUserId()
   if (!userId) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
@@ -78,10 +49,8 @@ export async function GET() {
   const urls = await prisma.url.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
-    take: 50,
-    include: {
-      _count: { select: { clicks: true } },
-    },
+    take: 100,
+    include: { _count: { select: { clicks: true } } },
   })
 
   return NextResponse.json(urls)

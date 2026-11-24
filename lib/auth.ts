@@ -3,6 +3,10 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
 import bcrypt from 'bcrypt'
 
+// Hash de una contraseña cualquiera: se usa cuando el email no existe para que la respuesta
+// tarde lo mismo y no se pueda averiguar qué emails están registrados.
+const DUMMY_HASH = bcrypt.hashSync('contraseña-que-no-existe', 12)
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -16,18 +20,15 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
-
-        if (!user || !user.passwordHash) return null
+        const email = credentials.email.trim().toLowerCase()
+        const user = await prisma.user.findUnique({ where: { email } })
 
         const isValid = await bcrypt.compare(
           credentials.password,
-          user.passwordHash
+          user?.passwordHash ?? DUMMY_HASH
         )
 
-        if (!isValid) return null
+        if (!user || !isValid) return null
 
         return {
           id: user.id,
@@ -42,7 +43,10 @@ export const authOptions: NextAuthOptions = {
   },
   
   callbacks: {
-    async redirect({ baseUrl }) {
+    // Solo redirige dentro de la propia aplicación (evita redirecciones abiertas)
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      if (new URL(url).origin === baseUrl) return url
       return baseUrl
     },
     async jwt({ token, user }) {
